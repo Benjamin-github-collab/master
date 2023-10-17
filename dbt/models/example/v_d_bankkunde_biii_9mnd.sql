@@ -41,6 +41,38 @@ kunde_med_avsl as (
       select k.*,
       least(k.tilfrisket_dato, nvl(last_day(add_months(k.sist_scoret_misl_i_sak_dato, case k.overforing_arsak_oppdat_kode when 'TAP' then 12 else 3 end)), k.tilfrisket_dato)) sak_avsluttet_dato
    from kunde_uten_avsl k
+),
+
+kunde_start  AS (
+  SELECT
+    k2.sk_bankkunde_biii_id,
+    k2.rk_bankkunde_id
+  FROM
+    kunde_med_avsl k2
+  LEFT JOIN
+    kunde_med_avsl k3
+  ON
+    k3.rk_bankkunde_id = k2.rk_bankkunde_id
+    AND k3.sk_bankkunde_biii_id <> k2.sk_bankkunde_biii_id
+    AND k3.kundesak_nr < k2.kundesak_nr 
+    AND months_between(k2.sak_start_dato, k3.sak_avsluttet_dato) <= 9
+  WHERE
+    k3.sk_bankkunde_biii_id IS NULL
+),
+
+kunde_connected as (
+   
+  SELECT level, 
+  connect_by_root sk_bankkunde_biii_id as parent_sk_bankkunde_biii_id, 
+  connect_by_root rk_bankkunde_id as parent_rk_bankkunde_id, 
+  connect_by_root sak_start_dato as parent_sak_start_dato,
+  SYS_CONNECT_BY_PATH(kundesak_nr, ' -> '), 
+  k.*
+  FROM kunde_med_avsl k
+    START WITH sk_bankkunde_biii_id in (select sk_bankkunde_biii_id from kunde_start  )
+    CONNECT BY prior k.rk_bankkunde_id = k.rk_bankkunde_id
+           and prior k.kundesak_nr + 1 = k.kundesak_nr
+           and months_between(k.sak_start_dato, prior k.sak_avsluttet_dato) <= 9
 )
 
-select * from kunde_med_avsl
+select * from kunde_connected
