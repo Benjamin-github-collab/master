@@ -1,5 +1,26 @@
-with
+/**********************************************************************************************
+Beskrivelse: Korrigerer sak_start_dato i ny misligholdsdefinisjon med tidligste sak_start_dato
+             fra ev. saker i gammel definisjon som var åpne på sak_start_dato etter ny definisjon.
+             Dette fordi at beregnet gjenvunnet må ta høyde for at banken agerte etter forløpet iht.
+             gammel definisjon, og ikke den nye som de på det tidspunktet visste ingenting om.
 
+             Resultatet blir det som er ment å være SB1s misligholdssaksdefinisjon.
+
+             LGD-databasekunder som ikke har noen misligholdssak (kun med pga. realisasjonsinformasjon)
+             tas også med i viewet, disse vil bl.a. mangle sak_start_dato.
+
+Tabellgrunnlag:   v_d_bankkunde_biii_9mnd
+                  d_bankkunde_biii
+                  d_bankkunde
+                  d_tid
+
+Endringslogg:
+Initialier   Dato         Beskrivelse
+MBJ          15.12.20     Opprettet view
+BLG          27.02.23     Lagt til kolonnen sak_avsluttet_dato
+
+***********************************************************************************************/
+with
 virkedag as (
   select lead(tid_id) over (order by tid_id) neste_virkedag_tid_id,
          lead(dato) over (order by tid_id) neste_virkedag_dato,
@@ -12,7 +33,7 @@ virkedag as (
 ),
 tid as (
   select t.tid_id, t.dato, v.virkedag_tid_id, v.virkedag_dato, v.virkedag_for_tid_id, v.virkedag_for_dato, v.neste_virkedag_tid_id, v.neste_virkedag_dato
-    from sb1_lgd.d_tid t
+    from RISIKO.LGD.d_tid t
     join virkedag v on t.tid_id < v.neste_virkedag_tid_id and t.tid_id >= v.virkedag_tid_id
 ),
 bankkunde_biii_korr as (
@@ -45,19 +66,19 @@ bankkunde_biii_korr as (
    case when t2.sk_bankkunde_biii_id is null and s.sak_start_dato + 90 < t.sak_start_dato then '1' else '0' end as korrigert_sak_start_dato_flagg,
    row_number() over (partition by t.sk_bankkunde_biii_id order by s.sak_start_dato) as rn, -- rangerer for å kunne finne den tidligste start-datoen fra gammel definisjon, ved overlapp
    t.sak_avsluttet_dato
-    from RISIKO.LGD.FAKE_D_BANKKUNDE_BIII t
-    left join RISIKO.LGD.FAKE_D_BANKKUNDE_BIII s on t.rk_bankkunde_id = s.rk_bankkunde_id
+    from {{ ref('v_d_bankkunde_biii_9mnd') }}  t
+    left join {{ source('LGD_SOURCES', 'D_BANKKUNDE') }} s on t.rk_bankkunde_id = s.rk_bankkunde_id
                                    and s.overforing_arsak_init_kode = 'MIS'
                                    and t.sak_start_dato between s.sak_start_dato + 90 and nvl(s.tilfrisket_dato, to_date('99991231', 'yyyymmdd'))
                                    and s.sak_start_dato < to_date('20210101', 'yyyymmdd')
-    left join RISIKO.LGD.FAKE_D_BANKKUNDE_BIII t2 on t2.rk_bankkunde_id = t.rk_bankkunde_id
+    left join {{ source('LGD_SOURCES', 'FAKE_D_BANKKUNDE_BIII') }} t2 on t2.rk_bankkunde_id = t.rk_bankkunde_id
                                           and t2.sak_start_dato < t.sak_start_dato
                                           and t2.sak_start_dato between s.sak_start_dato and nvl(s.tilfrisket_dato, to_date('99991231', 'yyyymmdd'))
 )
 select t.sk_bankkunde_biii_id,
        t.sk_bankkunde_biii_id_siste,
        t.rk_bankkunde_id,
-       t.bk_sb1_selskap_id,
+       t.bk_sb1_selskap_id, 
        t.kundenummer,
        t.kundenavn,
        t.edb_kunde_id,
@@ -108,7 +129,7 @@ select t.sk_bankkunde_biii_id,
        '0' as korrigert_sak_start_dato_flagg,
        case when c.rk_bankkunde_id is not null then '0' else '1' end siste_kundesak_flagg,
        null as sak_avsluttet_dato
-  from sb1_lgd.d_bankkunde_biii t
-  left join (select rk_bankkunde_id, count(8) antall from sb1_lgd.d_bankkunde_biii where sak_start_dato is not null group by rk_bankkunde_id) c on t.rk_bankkunde_id = c.rk_bankkunde_id
+  from {{ source('LGD_SOURCES', 'FAKE_D_BANKKUNDE_BIII') }} t
+  left join (select rk_bankkunde_id, count(8) antall from RISIKO.LGD.FAKE_D_BANKKUNDE_BIII where sak_start_dato is not null group by rk_bankkunde_id) c on t.rk_bankkunde_id = c.rk_bankkunde_id
  where t.sak_start_dato is null
-;
+

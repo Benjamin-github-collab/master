@@ -1,21 +1,40 @@
 
 version: 2
 
-models:
-  - name: my_first_dbt_model
-    description: "A starter dbt model"
-    columns:
-      - name: id
-        description: "The primary key for this table"
-        tests:
-          - unique
-          
+sources: 
+  - name: LGD_SOURCES
+    database: RISIKO
+    schema: LGD
 
-  - name: my_second_dbt_model
-    description: "A starter dbt model"
+    tables: 
+      - name: FAKE_D_BANKKUNDE_BIII
+      - name: D_BANKKUNDE
+      - name: FAKE_D_BANKKONTO
+      - name: F_KONSTATERT_TAP
+      - name: M_KONFIGURASJON_BANK
+      - name: P_LGD_M_KONFIGURASJON
+      - name: P_MALETIDSPUNKT
+models:
+  - name: v_d_bankkunde_biii_9mnd
+    description: '{{ doc("docs_v_d_bankkunde_biii_9mnd") }}'
     columns:
-      - name: id
+      - name: sk_bankkunde_biii_id
+        description: "The primary key for this table"
+        tests: 
+          - unique
+   
+      
+  - name: v_d_bankkunde_biii_korr
+    description: "korreksjonsview, som tar høyde for saker som startet før ny basel III implementering."
+    columns:
+      - name: sk_bankkunde_biii_id
         description: "The primary key for this table"
         tests:
           - unique
-          - not_null
+
+  - name: m_d_bankkunde_biii_kto_t
+    description: "Sammenstilling av kontoer som tilhører en sak"
+    
+ 
+
+

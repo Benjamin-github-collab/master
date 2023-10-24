@@ -1,12 +1,4 @@
 
-/*
-    Welcome to your first dbt model!
-    Did you know that you can also configure models directly within SQL files?
-    This will override configurations stated in dbt_project.yml
-
-    Try changing "table" to "view" below
-*/
-
 {{ config(materialized='view') }}
 
 with
@@ -33,7 +25,7 @@ kunde_uten_avsl as (
          t.historisk_realisasjon_flagg,
          row_number() over (partition by t.rk_bankkunde_id order by t.sak_start_dato, t.tilfrisket_dato nulls last) kundesak_nr
 
-    from RISIKO.LGD.FAKE_D_BANKKUNDE_BIII t
+    from {{ source('LGD_SOURCES','FAKE_D_BANKKUNDE_BIII') }} t
    where t.sak_start_dato is not null
 ),
 --En ny kolonne blir lagt til. Denne kolonne skal funke som en proxy for avsluttet sak dato. Denne skal videre brukes for beregn til logikk. Kolonnen blir lagd siden nåværende bruk av kun tilfrisket dato er ikke tilstrekkelig i situasjoner hvor saken ikke lenger har eksponering, men er med i lgd.
@@ -64,15 +56,47 @@ kunde_connected as (
    
   SELECT level, 
   connect_by_root sk_bankkunde_biii_id as parent_sk_bankkunde_biii_id, 
+  connect_by_root overforing_arsak_init_kode as parent_overforing_arsak_init_kode,
   connect_by_root rk_bankkunde_id as parent_rk_bankkunde_id, 
   connect_by_root sak_start_dato as parent_sak_start_dato,
-  SYS_CONNECT_BY_PATH(kundesak_nr, ' -> '), 
+  connect_by_root sak_kilde_init as parent_sak_kilde_init,
+  SYS_CONNECT_BY_PATH(kundesak_nr, ' -> ') as hierarkisk_rangering, 
   k.*
   FROM kunde_med_avsl k
-    START WITH sk_bankkunde_biii_id in (select sk_bankkunde_biii_id from kunde_start  )
+    START WITH sk_bankkunde_biii_id in (select sk_bankkunde_biii_id from kunde_start)
     CONNECT BY prior k.rk_bankkunde_id = k.rk_bankkunde_id
            and prior k.kundesak_nr + 1 = k.kundesak_nr
            and months_between(k.sak_start_dato, prior k.sak_avsluttet_dato) <= 9
 )
 
-select * from kunde_connected
+-- Trenger å hente ut én rad per mislighold med riktige verdier (fra første til siste)
+select c.parent_sk_bankkunde_biii_id as sk_bankkunde_biii_id,
+       c.sk_bankkunde_biii_id as sk_bankkunde_biii_id_siste,
+       c.rk_bankkunde_id,
+       c.bk_sb1_selskap_id,
+       c.kundenummer,
+       c.kundenavn,
+       c.edb_kunde_id,
+       c.parent_overforing_arsak_init_kode as overforing_arsak_init_kode,
+       c.overforing_arsak_oppdat_kode,
+       c.parent_sak_start_dato as sak_start_dato,
+       c.sak_start_dato as sak_start_dato_siste,
+       c.parent_sak_kilde_init as sak_kilde_init,
+       c.sak_kilde_oppdatert,
+       count(8) over (partition by c.rk_bankkunde_id order by c.parent_sak_start_dato) kundesak_antall_9mnd,
+       c.tilfrisket_dato,
+       c.sak_avsluttet_dato,
+       c.tilfrisket_flagg,
+       c.sist_scoret_misl_i_sak_dato,
+       c.markedssegment_kode,
+       c.historisk_realisasjon_flagg,
+       c.level saker_i_sak_antall,
+       case when row_number() over (partition by c.rk_bankkunde_id order by c.parent_sak_start_dato)
+                  = count(8) over (partition by c.rk_bankkunde_id)
+              then '1'
+              else '0'
+        end siste_kundesak_flagg
+  from kunde_connected c
+ where c.hierarkisk_rangering = ' -> 1'
+
+
