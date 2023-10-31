@@ -8,12 +8,34 @@ sources:
 
     tables: 
       - name: FAKE_D_BANKKUNDE_BIII
+        description: "Tabellen er en oversikt over misligholdssaker for kunde som har gått i mislighold"
+        columns: 
+          - name: sk_bankkunde_biii_id
+            description: "Primærnøkkel for tabellen som henviser til en enkel misligholdssak"
       - name: D_BANKKUNDE
       - name: FAKE_D_BANKKONTO
       - name: F_KONSTATERT_TAP
       - name: M_KONFIGURASJON_BANK
       - name: P_LGD_M_KONFIGURASJON
       - name: P_MALETIDSPUNKT
+      - name: F_KONSTATERT_TAP_KORR
+      - name: D_TID
+      - name: F_KNYTNING_SYNDIKAT
+      - name: P_KORR_TRANS_KILDE_KODE
+      - name: F_KONTOBALANSE_T
+      - name: F_EAD_T
+      - name: D_RESKONTRO_TREKKONTO
+      - name: F_GL_BANKKONTO_TRANS_B
+      - name: F_KAPITALTRANSAKSJON_T
+      - name: P_KAPITALTRANSAKSJONSKODE
+      - name: D_RESKONTRO
+      - name: D_CASHPOOLHIERARKI
+      - name: F_NEDSKRIVNING
+      - name: D_RENTE_BASIS_SATS
+      - name: P_LGD_BATCH
+      - name: F_FORDELT_SIKKERHETSVERDI_T
+      - name: F_LGD_T
+      
 models:
   - name: v_d_bankkunde_biii_9mnd
     description: '{{ doc("docs_v_d_bankkunde_biii_9mnd") }}'
@@ -22,7 +44,8 @@ models:
         description: "The primary key for this table"
         tests: 
           - unique
-   
+      
+
       
   - name: v_d_bankkunde_biii_korr
     description: "korreksjonsview, som tar høyde for saker som startet før ny basel III implementering."
@@ -31,10 +54,40 @@ models:
         description: "The primary key for this table"
         tests:
           - unique
+  
+  - name: d_virkedag
+    description: "Oversikt over virkedager"
 
   - name: m_d_bankkunde_biii_kto_t
     description: "Sammenstilling av kontoer som tilhører en sak"
     
- 
+  - name: m_d_bankkunde_biii_lgd_t
+    description: 'Viewet standardiserer viktige saksdatoer til virkedager, samt beregner informasjon om konstatert tap per sak iht. konfigurasjon per konto.'
 
+  - name: m_d_bankkonto_biii_flagg_t
+    description: 'Viewet setter flagg verdier på en rekke kolonner på kontonivå.'
 
+  - name: m_gl_kontantstrom_t
+    
+  - name: m_gl_kontantstrom_temp1
+
+  - name: v_reskontro_kks_underkonto
+
+  - name: v_cashpool_ikke_balanse
+
+  - name: m_trans_kontantstrom_rente_t
+
+  - name: res_sak_bankkonto_kontantstr_t
+
+  - name: m_sak_bankkonto_lgd_t
+
+  - name: res_sak_bankkonto_lgd_t
+
+  - name: m_sak_bankkunde_lgd_t
+
+  - name: res_sak_bankkunde_lgd_t
+
+  
+  
+  - name: testfile
+    description: "Testfile"

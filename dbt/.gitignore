@@ -1,9 +1,90 @@
-target/
-dbt_modules/
-dbt_packages/
-logs/
-venv/
+# Commonly used temporary files during python development
+# inspired by https://github.com/github/gitignore/blob/main/Python.gitignore
+# Distribution and packaging
+.Python
+__pycache__/
+*.py[cod]
+dist/
+build/
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Isntaller logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit tests and coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+coverage.xml
+*.cover
+.pytest_cache/
+cover/
+
+# Jupyter notebooks
+.ipynb_checkpoints
+
+# .env file often used for secrets and credential files
+.env
+
+# Virtual environments
+.venv
 env/
-test.env
-__pycache__
-.user.yml
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+
+# Visual Studio Code IDEA generated files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+# Jetbrains IDEs: IntelliJ and PyCharm
+# User-specific stuff
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+
+# Generated files
+.idea/**/contentModel.xml
+
+# Sensitive or high-churn files
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/dbnavigator.xml
+
+*.p8
+*.pub

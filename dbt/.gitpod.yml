@@ -1,0 +1,19 @@
+image: img.plattform.dataplattform.sparebank1.no/dp-full:main-gitpod
+
+tasks:
+  - name: install
+    command: |
+      pre-commit install && pre-commit run
+      pip install -r requirements.txt
+      exit
+
+  - name: dope
+    before: |
+      dope --help
+
+vscode:
+  extensions:
+    - hashicorp.terraform
+    - ms-python.python
+    - ms-pyright.pyright
+    - ms-azuretools.vscode-docker

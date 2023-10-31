@@ -29,7 +29,8 @@ MJ           23.01.23     Lagt til filter på bankkoder som skal beregnes samt j
                           for å mappe bankkoder som er infusjonert i annen bank riktig.
 BLG          23.10.23     I forbindelse med migrering på sky måtte syntaxen for enkelte kolonner endres. 
                           I dette tilfelle gjalt det KONTO_FOM/KONTO_TOM. Måtte dense_rank til konto_grl spørringen 
-                          for deretter                            
+                          for deretter å benyttes i neste with. Grunnen til dette er at max aggregeringsfunksjon ikke kan brukes 
+                          med vindusfunksjonen dense_rank i Snowflake.                            
 ***********************************************************************************************/
 
 {{ config(materialized='table') }}
@@ -131,7 +132,7 @@ select p2.tid_id,
                     nvl(ku.sak_avsluttet_dato, p2.dato))
        end beregn_til_dato,
        nvl(ku.sak_avsluttet_dato, p2.dato) beregnet_stans_etter_score,
-       'batch_navn' as batch_navn,
+       'ETTER_TETTING_AV_F_EAD_T' as batch_navn,
        ku.sak_avsluttet_dato
   from {{ ref('v_d_bankkunde_biii_korr') }} ku
   join p_last p2

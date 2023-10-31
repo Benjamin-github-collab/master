@@ -1,0 +1,19 @@
+{
+    "vscode-kubernetes.log-viewer.auto.run": true,
+    "vscode-kubernetes.log-viewer.follow": true,
+    "vscode-kubernetes.log-viewer.timestamp": true,
+    "vscode-kubernetes.log-viewer.wrap": false,
+    "aws.telemetry": false,
+    "vs-kubernetes": {
+        "vs-kubernetes.namespace": "",
+        "vs-kubernetes.kubectlVersioning": "user-provided",
+        "checkForMinikubeUpgrade": false
+    },
+    "aws.codeWhisperer.shareCodeWhispererContentWithAWS": false,
+    "aws.experiments": {
+        "CodeWhisperer": false
+    },
+    "files.associations": {
+        "*.hcl": "terraform"
+    }
+}
